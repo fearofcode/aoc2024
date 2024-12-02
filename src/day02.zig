@@ -12,22 +12,102 @@ const gpa = util.gpa;
 const data = @embedFile("data/day02.txt");
 
 pub fn part1(allocator: std.mem.Allocator) !void {
-    _ = allocator;
-
     var lines = split_lines(data);
+    var levels = try std.ArrayList(i64).initCapacity(allocator, 16);
+
+    var safe_count: usize = 0;
 
     while (lines.next()) |line| {
-        print("{s}\n", .{line});
+        // std.debug.print("\nline = {s}\n", .{line});
+        levels.clearRetainingCapacity();
+        var tokens = tokenizeAny(u8, line, " ");
+        while (tokens.next()) |token| {
+            try levels.append(try parseInt(i64, token, 10));
+        }
+
+        if (level_safe(levels.items)) {
+            safe_count += 1;
+        }
     }
+
+    std.debug.print("{d}\n", .{safe_count});
+}
+
+pub fn level_safe(levels: []i64) bool {
+    var increasing = true;
+    var decreasing = true;
+
+    // check if increasing
+    var pairs = std.mem.window(i64, levels, 2, 1);
+    while (pairs.next()) |pair| {
+        if (pair[1] < pair[0]) {
+            increasing = false;
+            // std.debug.print("not increasing\n", .{});
+            break;
+        }
+    }
+    // check if decreasing
+    pairs = std.mem.window(i64, levels, 2, 1);
+    while (pairs.next()) |pair| {
+        if (pair[1] > pair[0]) {
+            decreasing = false;
+            // std.debug.print("not decreasing\n", .{});
+            break;
+        }
+    }
+
+    if (!increasing and !decreasing) {
+        return false;
+    }
+
+    pairs = std.mem.window(i64, levels, 2, 1);
+
+    while (pairs.next()) |pair| {
+        const difference = @abs(pair[0] - pair[1]);
+        if (difference < 1 or difference > 3) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 pub fn part2(allocator: std.mem.Allocator) !void {
-    _ = allocator;
     var lines = split_lines(data);
+    var levels = try std.ArrayList(i64).initCapacity(allocator, 16);
+
+    var safe_count: usize = 0;
 
     while (lines.next()) |line| {
-        print("{s}\n", .{line});
+        // std.debug.print("\nline = {s}\n", .{line});
+        levels.clearRetainingCapacity();
+        var tokens = tokenizeAny(u8, line, " ");
+        while (tokens.next()) |token| {
+            try levels.append(try parseInt(i64, token, 10));
+        }
+
+        // safe without removal
+        if (level_safe(levels.items)) {
+            // std.debug.print("line {s} is safe without removal\n", .{line});
+            safe_count += 1;
+            continue;
+        }
+
+        var remove_idx: usize = 0;
+        while (remove_idx < levels.items.len) : (remove_idx += 1) {
+            // std.debug.print("remove_idx = {d}\n", .{remove_idx});
+            var alternate_level = try levels.clone();
+            _ = alternate_level.orderedRemove(remove_idx);
+
+            if (level_safe(alternate_level.items)) {
+                // std.debug.print("line {s} is safe if you remove index {d}\n", .{ line, remove_idx });
+                safe_count += 1;
+                break;
+            }
+        }
     }
+
+    std.debug.print("{d}\n", .{safe_count});
 }
 
 pub fn main() !void {
@@ -35,7 +115,7 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try part1(allocator);
+    try part2(allocator);
 }
 
 // Useful stdlib functions
