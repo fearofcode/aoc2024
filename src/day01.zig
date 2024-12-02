@@ -12,22 +12,82 @@ const gpa = util.gpa;
 const data = @embedFile("data/day01.txt");
 
 pub fn part1(allocator: std.mem.Allocator) !void {
-    _ = allocator;
-
     var lines = split_lines(data);
+    const lines_len = line_count(data);
+
+    var lhs = try std.ArrayList(i64).initCapacity(allocator, lines_len);
+    var rhs = try std.ArrayList(i64).initCapacity(allocator, lines_len);
 
     while (lines.next()) |line| {
-        print("{s}\n", .{line});
+        var tokens = splitAny(u8, line, " ");
+        var appending_lhs = true;
+        var appending_rhs = false;
+        while (tokens.next()) |token| {
+            if (token.len == 0) continue;
+
+            if (appending_lhs) {
+                try lhs.append(try parseInt(i64, token, 10));
+                appending_lhs = false;
+                appending_rhs = true;
+            } else if (appending_rhs) {
+                try rhs.append(try parseInt(i64, token, 10));
+                appending_rhs = false;
+            }
+        }
     }
+
+    std.mem.sort(i64, lhs.items, {}, std.sort.asc(i64));
+    std.mem.sort(i64, rhs.items, {}, std.sort.asc(i64));
+
+    var i: usize = 0;
+    var sum: usize = 0;
+    while (i < lhs.items.len) : (i += 1) {
+        sum += @abs(lhs.items[i] - rhs.items[i]);
+    }
+    std.debug.print("{d}\n", .{sum});
 }
 
 pub fn part2(allocator: std.mem.Allocator) !void {
-    _ = allocator;
     var lines = split_lines(data);
+    const lines_len = line_count(data);
+
+    var lhs = try std.ArrayList(i64).initCapacity(allocator, lines_len);
+    var rhs = try std.ArrayList(i64).initCapacity(allocator, lines_len);
 
     while (lines.next()) |line| {
-        print("{s}\n", .{line});
+        var tokens = splitAny(u8, line, " ");
+        var appending_lhs = true;
+        var appending_rhs = false;
+        while (tokens.next()) |token| {
+            if (token.len == 0) continue;
+
+            if (appending_lhs) {
+                try lhs.append(try parseInt(i64, token, 10));
+                appending_lhs = false;
+                appending_rhs = true;
+            } else if (appending_rhs) {
+                try rhs.append(try parseInt(i64, token, 10));
+                appending_rhs = false;
+            }
+        }
     }
+
+    var counts = std.AutoHashMap(i64, i64).init(allocator);
+
+    var i: usize = 0;
+    for (rhs.items) |item| {
+        const c = counts.get(item) orelse 0;
+        try counts.put(item, c + 1);
+    }
+
+    var sum: i64 = 0;
+    i = 0;
+    while (i < lhs.items.len) : (i += 1) {
+        const lhs_item = lhs.items[i];
+        const rhs_count = counts.get(lhs_item) orelse 0;
+        sum += lhs_item * rhs_count;
+    }
+    std.debug.print("{d}\n", .{sum});
 }
 
 pub fn main() !void {
@@ -35,7 +95,7 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try part1(allocator);
+    try part2(allocator);
 }
 
 // Useful stdlib functions
