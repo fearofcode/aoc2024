@@ -1,6 +1,5 @@
 const std = @import("std");
-const Regex = @import("zig-regex/regex.zig").Regex;
-const Parser = @import("zig-regex/parse.zig").Parser;
+const Regex = @import("vendor/zig-regex/regex.zig").Regex;
 const Allocator = std.mem.Allocator;
 const List = std.ArrayList;
 const Map = std.AutoHashMap;
