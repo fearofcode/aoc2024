@@ -25,3 +25,7 @@ You can modify the template to add your own changes across all days.  To do so, 
 ## Setting up ZLS
 
 Zig has a reasonably robust language server, which can provide autocomplete for VSCode and many other editors.  It can help significantly with exploring the std lib and suggesting parameter completions.  The VSCode extension (augusterame.zls-vscode) will automatically install the language server in the background.  If you are using a different editor, follow their [install instructions](https://zigtools.github.io/install-zls/).  If you want to install a specific version of the language server (for example for maximum compatibility with 0.10.0), [check their releases page](https://github.com/zigtools/zls/releases) or [follow their instructions to build from source](https://github.com/zigtools/zls#from-source).  Note that ZLS tracks master, so if you are using Zig 0.10.0 you may need to download a newer version to build ZLS.
+
+## Acknowledgements
+
+This repo contains a substantial copy of the code from https://github.com/tiehuis/zig-regex . See `LICENSE.zig-regex` for the MIT license it is distributed under.

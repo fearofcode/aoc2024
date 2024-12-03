@@ -1,4 +1,6 @@
 const std = @import("std");
+const Regex = @import("zig-regex/regex.zig").Regex;
+const Parser = @import("zig-regex/parse.zig").Parser;
 const Allocator = std.mem.Allocator;
 const List = std.ArrayList;
 const Map = std.AutoHashMap;
@@ -12,22 +14,63 @@ const gpa = util.gpa;
 const data = @embedFile("data/day03.txt");
 
 pub fn part1(allocator: std.mem.Allocator) !void {
-    _ = allocator;
+    var r = try Regex.compile(allocator, "mul\\(([0-9]{1,3}),([0-9]{1,3})\\)");
 
+    var offset: usize = 0;
+    var sum: i64 = 0;
     var lines = split_lines(data);
 
     while (lines.next()) |line| {
-        print("{s}\n", .{line});
+        offset = 0;
+        inner: while (true) {
+            if (offset >= line.len) break :inner;
+            const caps = try r.captures(line[offset..]);
+            if (caps) |c| {
+                const op1_int = try parseInt(i64, c.sliceAt(1).?, 10);
+                const op2_int = try parseInt(i64, c.sliceAt(2).?, 10);
+                sum += op1_int * op2_int;
+                offset += c.boundsAt(0).?.lower + c.sliceAt(0).?.len;
+            } else {
+                break :inner;
+            }
+        }
     }
+
+    std.debug.print("{d}\n", .{sum});
 }
 
 pub fn part2(allocator: std.mem.Allocator) !void {
-    _ = allocator;
-    var lines = split_lines(data);
+    var r = try Regex.compile(allocator, "mul\\(([0-9]{1,3}),([0-9]{1,3})\\)|do\\(\\)|don't\\(\\)");
 
+    var offset: usize = 0;
+    var sum: i64 = 0;
+    var lines = split_lines(data);
+    var enabled = true;
     while (lines.next()) |line| {
-        print("{s}\n", .{line});
+        offset = 0;
+        inner: while (true) {
+            if (offset >= line.len) break :inner;
+            const caps = try r.captures(line[offset..]);
+            if (caps) |c| {
+                const entireMatch = c.sliceAt(0).?;
+                if (std.mem.indexOf(u8, entireMatch, "mul") != null and enabled) {
+                    const op1_int = try parseInt(i64, c.sliceAt(1).?, 10);
+                    const op2_int = try parseInt(i64, c.sliceAt(2).?, 10);
+                    sum += op1_int * op2_int;
+                } else if (std.mem.eql(u8, entireMatch, "do()")) {
+                    enabled = true;
+                } else if (std.mem.eql(u8, entireMatch, "don't()")) {
+                    enabled = false;
+                }
+
+                offset += c.boundsAt(0).?.lower + c.sliceAt(0).?.len;
+            } else {
+                break :inner;
+            }
+        }
     }
+
+    std.debug.print("{d}\n", .{sum});
 }
 
 pub fn main() !void {
@@ -35,7 +78,7 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try part1(allocator);
+    try part2(allocator);
 }
 
 // Useful stdlib functions
